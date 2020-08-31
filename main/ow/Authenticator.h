@@ -18,7 +18,7 @@ public:
     explicit Authenticator(BLERemoteService *oneWheelService);
 
     bool isAuthenticated() const;
-    bool startAuthentication();
+    bool authenticate();
 
 protected:
     BLERemoteService *m_oneWheelService;
@@ -39,9 +39,12 @@ protected:
     void disableSerialReadNotify();
 
     bool requestChallenge();
+    bool isFirmwareRevisionCompatible(int firmwareRevision);
     void sendChallengeResponse();
 
     bool tryAuthenticated();
+
+    void waitAfterWrite() const;
 };
 
 } // namespace ow

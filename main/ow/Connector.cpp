@@ -5,11 +5,12 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <BLEDevice.h>
+#include "ConnectorCallbacks.h"
 
 namespace ow
 {
 
-static const char *LOG_TAG = "OWConnector";
+static const char *LOG_TAG = "ow::Connector";
 static TaskHandle_t connector_task_hdnl = nullptr;
 
 void connector_task(void *pvParameter)
@@ -37,7 +38,7 @@ void Connector::start()
         ESP_LOGE(LOG_TAG, "already started");
     }
 
-    ESP_LOGI(LOG_TAG, "starting OWConnector...");
+    ESP_LOGI(LOG_TAG, "starting Connector...");
     xTaskCreate(
             &connector_task,
             "connector_task",
@@ -65,11 +66,17 @@ void Connector::doWork()
         delete m_scanResult;
         m_scanResult = nullptr;
     }
+
+    // TODO retry...
+    //   if not connected, retry periodically
+    //   if not auth'd, retry periodically
+    //   re-scan ?!
+    //   more ?!
 }
 
 void Connector::startScan()
 {
-    ESP_LOGI(LOG_TAG, "OWConnector::startScan");
+    ESP_LOGI(LOG_TAG, "startScan");
 
     if (m_advertisedDeviceCallbacks) {
         // assume we already started when the callback handler is already instantiated
@@ -78,7 +85,7 @@ void Connector::startScan()
         return;
     }
 
-    m_advertisedDeviceCallbacks = new AdvertisedDeviceCallbacks(this);
+    m_advertisedDeviceCallbacks = new ConnectorAdvertisedDeviceCallbacks(this);
 
     BLEScan* pBLEScan = BLEDevice::getScan();
     pBLEScan->setAdvertisedDeviceCallbacks(m_advertisedDeviceCallbacks);
@@ -90,66 +97,30 @@ void Connector::startScan()
 
 void Connector::stopScan()
 {
-    ESP_LOGI(LOG_TAG, "OWConnector::stopScan");
+    ESP_LOGI(LOG_TAG, "stopScan");
 
     BLEDevice::getScan()->stop();
 }
 
 bool Connector::connectTo(BLEAddress address, esp_ble_addr_type_t type)
 {
-    ESP_LOGI(LOG_TAG, "Connector::connectTo: %s", address.toString().c_str());
+    ESP_LOGI(LOG_TAG, "connectTo: %s", address.toString().c_str());
 
     BLEClient *client = BLEDevice::createClient();
-    m_clientCallbacks = new ClientCallbacks(this);
+    m_clientCallbacks = new ConnectorClientCallbacks(this);
     client->setClientCallbacks(m_clientCallbacks);
     client->connect(address, type);
 
     BLERemoteService *remoteService = client->getService(ow::UUID::Service);
     if (remoteService == nullptr) {
-        ESP_LOGE(LOG_TAG, "OWConnector::connectServiceAndCharacteristic: Failed to find service UUID: %s", ow::UUID::Service.toString().c_str());
+        ESP_LOGE(LOG_TAG, "Failed to find service UUID: %s", ow::UUID::Service.toString().c_str());
         client->disconnect();
         return false;
     }
-    ESP_LOGI(LOG_TAG, "OWConnector::connectServiceAndCharacteristic: found service");
+    ESP_LOGI(LOG_TAG, "found desired service");
 
     m_authenticator = new Authenticator(remoteService);
-    m_authenticator->startAuthentication();
-    // found one wheel!
-    //  - start authentication
-    //  - once authenticated: m_oneWheel = new OnewWheel(remoteService)
-
-    return true;
-}
-
-Connector::AdvertisedDeviceCallbacks::AdvertisedDeviceCallbacks(Connector *connector):
-    m_connector(connector)
-{}
-
-void Connector::AdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertisedDevice)
-{
-    ESP_LOGI(LOG_TAG, "AdvertisedDeviceCallbacks:onResult: %s", advertisedDevice.toString().c_str());
-
-    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(ow::UUID::Service)) {
-        ESP_LOGI(LOG_TAG, "AdvertisedDeviceCallbacks:onResult: device provides requested service! stopping scan...");
-        m_connector->stopScan();
-        m_connector->m_scanResult = new BLEAdvertisedDevice(advertisedDevice);
-    }
-}
-
-Connector::ClientCallbacks::ClientCallbacks(Connector *connector):
-    m_connector(connector)
-{}
-
-void Connector::ClientCallbacks::onConnect(BLEClient *client)
-{
-    ESP_LOGI(LOG_TAG, "ClientCallbacks:onConnect");
-}
-
-void Connector::ClientCallbacks::onDisconnect(BLEClient *client)
-{
-    ESP_LOGI(LOG_TAG, "ClientCallbacks:onDisconnect");
-
-    m_connector->m_isConnected = false;
+    return m_authenticator->authenticate();
 }
 
 } // namespace ow

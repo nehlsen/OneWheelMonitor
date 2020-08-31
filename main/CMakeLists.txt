@@ -2,6 +2,7 @@ set(COMPONENT_SRCS
 # BTLE Lib - my app
         main.cpp
         ow/Connector.cpp
+        ow/ConnectorCallbacks.cpp
         ow/Authenticator.cpp
         ow/Authenticator/InputBuffer.cpp
         ow/Authenticator/ChallengeResponse.cpp

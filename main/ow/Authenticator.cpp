@@ -14,7 +14,6 @@ namespace ow
 #define LOG_TAG "ow::Authenticator"
 
 static const int authentication_steps = 5;
-static const int writeWait = 250;
 
 static InputBuffer *MyInputBuffer = new InputBuffer;
 static ChallengeResponse *MyChallengeResponse = new ChallengeResponse(new MD5_ESP32);
@@ -42,7 +41,7 @@ bool Authenticator::isAuthenticated() const
     return m_authenticationState == AUTHENTICATION_COMPLETE;
 }
 
-bool Authenticator::startAuthentication()
+bool Authenticator::authenticate()
 {
     if (m_authenticationState != NOT_STARTED) {
         return false;
@@ -91,19 +90,34 @@ bool Authenticator::requestChallenge()
     ESP_LOGI(LOG_TAG, "2/%d: read Characteristic: Firmware Revision", authentication_steps);
     auto firmwareRevisionCharacteristic = m_oneWheelService->getCharacteristic(UUID::FirmwareRevisionCharacteristic);
     std::string firmwareRevision = firmwareRevisionCharacteristic->readValue();
-    // TODO check firmwareRev >= 4134(0x1026) < 5000
-    if (true) {
-        m_authenticationState = FIRMWARE_CHECK_SUCCEED;
-    } else {
-        m_authenticationState = FIRMWARE_CHECK_FAILED;
+    if (!isFirmwareRevisionCompatible(twoByteHexToInt(firmwareRevisionCharacteristic->readRawData()))) {
         return false;
     }
 
     ESP_LOGI(LOG_TAG, "3/%d: write Characteristic: Firmware Revision", authentication_steps);
     firmwareRevisionCharacteristic->writeValue(firmwareRevision);
     m_authenticationState = FIRMWARE_WRITE_BACK;
-    vTaskDelay(writeWait / portTICK_PERIOD_MS);
+    waitAfterWrite();
 
+    return true;
+}
+
+void Authenticator::waitAfterWrite() const
+{
+    static const int writeWait = 250;
+    vTaskDelay(writeWait / portTICK_PERIOD_MS);
+}
+
+bool Authenticator::isFirmwareRevisionCompatible(int firmwareRevision)
+{
+    if (firmwareRevision < 4134 || firmwareRevision >= 5000) {
+        ESP_LOGE(LOG_TAG, "isFirmwareRevisionCompatible, FAIL, version %d not compatible", firmwareRevision);
+
+        m_authenticationState = FIRMWARE_CHECK_FAILED;
+        return false;
+    }
+
+    m_authenticationState = FIRMWARE_CHECK_SUCCEED;
     return true;
 }
 
@@ -113,7 +127,7 @@ void Authenticator::sendChallengeResponse()
     ESP_LOGI(LOG_TAG, "4/%d: send challenge-response", authentication_steps);
     serialWriteCharacteristic->writeValue(MyChallengeResponse->getResponse(), ChallengeResponse::PackageSize);
     m_authenticationState = CHALLENGE_RESPONSE_WRITTEN;
-    vTaskDelay(writeWait / portTICK_PERIOD_MS);
+    waitAfterWrite();
 }
 
 bool Authenticator::tryAuthenticated()
