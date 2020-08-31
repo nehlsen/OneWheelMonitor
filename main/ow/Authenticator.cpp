@@ -21,15 +21,12 @@ static InputBuffer *MyInputBuffer = new InputBuffer;
 static ChallengeResponse *MyChallengeResponse = new ChallengeResponse(new MD5_ESP32);
 
 static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
-    ESP_LOGI(__FILE__, "Notify callback, received %d bytes", length);
-//    ESP_LOGI(__FILE__, "Notify callback for characteristic %s", pBLERemoteCharacteristic->getUUID().toString().c_str());
-//    ESP_LOGI(__FILE__, " of data length %d", length);
-//    ESP_LOGI(__FILE__, "data: %s", (char*)pData);
+    ESP_LOGV(LOG_TAG, "Notify callback, received %d bytes", length);
 
     MyInputBuffer->append(pData, length);
     if (MyInputBuffer->isSaturated()) {
         MyChallengeResponse->setChallenge(MyInputBuffer->getBuffer());
-        MyChallengeResponse->generateResponse();
+        MyInputBuffer->reset();
     }
 }
 
@@ -47,13 +44,14 @@ bool Authenticator::startAuthentication()
         return false;
     }
 
+    const int writeWait = 250;
 
 //    (1) readCharacteristic:FW REV
     ESP_LOGI(LOG_TAG, "1/%d: read Characteristic: Firmware Revision", authentication_steps);
     auto firmwareRevisionCharacteristic = m_oneWheelService->getCharacteristic(ow::UUID::FirmwareRevisionCharacteristic);
     std::string firmwareRevision = firmwareRevisionCharacteristic->readValue();
     ESP_LOGI(LOG_TAG, "  Firmware Revision: %s", firmwareRevision.c_str());
-    esp_log_buffer_hex(LOG_TAG, firmwareRevision.c_str(), firmwareRevision.length());
+    ESP_LOG_BUFFER_HEXDUMP(LOG_TAG, firmwareRevision.c_str(), firmwareRevision.length(), ESP_LOG_INFO);
 
 //       (2) if Characteristic == FW REV
 //           check version >= 4034
@@ -74,15 +72,17 @@ bool Authenticator::startAuthentication()
     //             write firmware rev characteristic
     ESP_LOGI(LOG_TAG, "3/%d: write Characteristic: Firmware Revision", authentication_steps);
     firmwareRevisionCharacteristic->writeValue(firmwareRevision);
+    ESP_LOGI(LOG_TAG, "### waiting..."); vTaskDelay(writeWait / portTICK_PERIOD_MS);
 
-    if (MyChallengeResponse->getResponseSize() > 0) {
+    if (MyChallengeResponse->generateResponse()) {
         ESP_LOGI(LOG_TAG, "4/%d: challenge-response ready, stopping notifications", authentication_steps);
         serialReadCharacteristic->registerForNotify(nullptr);
 
         auto serialWriteCharacteristic = m_oneWheelService->getCharacteristic(ow::UUID::UartSerialWriteCharacteristic);
 
         ESP_LOGI(LOG_TAG, "4/%d: send challenge-response", authentication_steps);
-        serialWriteCharacteristic->writeValue(MyChallengeResponse->getResponse(), MyChallengeResponse->getResponseSize());
+        serialWriteCharacteristic->writeValue(MyChallengeResponse->getResponse(), ChallengeResponse::PackageSize);
+        ESP_LOGI(LOG_TAG, "### waiting..."); vTaskDelay(writeWait / portTICK_PERIOD_MS);
         ESP_LOGI(LOG_TAG, "4/%d: write complete...", authentication_steps);
     } else {
         ESP_LOGE(LOG_TAG, "sendChallengeResponse, FAIL, no response avail");

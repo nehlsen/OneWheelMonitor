@@ -14,6 +14,7 @@ public:
     bool isSaturated() const;
 
     bool append(uint8_t* pData, size_t length);
+    void reset();
 
     uint8_t getBufferSize() const;
     uint8_t *getBuffer() const;

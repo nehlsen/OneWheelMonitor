@@ -26,7 +26,7 @@ bool InputBuffer::isSaturated() const
 bool InputBuffer::append(uint8_t* pData, size_t length)
 {
     if (m_writeIndex + length > m_bufferSize) {
-        ESP_LOGE(LOG_TAG, "InputBuffer: Input Buffer overflow!");
+        ESP_LOGE(LOG_TAG, "Buffer overflow!");
         return false;
     }
 
@@ -34,10 +34,18 @@ bool InputBuffer::append(uint8_t* pData, size_t length)
     m_writeIndex += length;
 
     if (isSaturated()) {
-        ESP_LOGI(LOG_TAG, "InputBuffer: Input Buffer saturated!");
+        ESP_LOGD(LOG_TAG, "Buffer saturated!");
     }
 
     return true;
+}
+
+void InputBuffer::reset()
+{
+    ESP_LOGD(LOG_TAG, "reset");
+
+    memset(m_buffer, 0x0, m_bufferSize);
+    m_writeIndex = 0;
 }
 
 uint8_t InputBuffer::getBufferSize() const
