@@ -3,6 +3,10 @@ set(COMPONENT_SRCS
         main.cpp
         ow/Connector.cpp
         ow/Authenticator.cpp
+        ow/Authenticator/InputBuffer.cpp
+        ow/Authenticator/ChallengeResponse.cpp
+        ow/Authenticator/MD5.cpp
+        ow/Authenticator/MD5_ESP32.cpp
 # BTLE Lib - sample app
 #        BLE_Arduino/BLE_client.cpp
 # IDF BTLE - modified sample
