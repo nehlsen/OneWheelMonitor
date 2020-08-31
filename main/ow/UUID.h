@@ -5,10 +5,7 @@
 
 namespace ow::UUID {
 
-static char BleDescriptorEnableNotificationValue[] = {0x01, 0x00};
-
 static BLEUUID Service(                       "e659F300-ea98-11e3-ac10-0800200c9a66");
-static BLEUUID ConfigDescriptor(              "00002902-0000-1000-8000-00805f9b34fb");
 
 static BLEUUID SerialNumberCharacteristic(    "e659f301-ea98-11e3-ac10-0800200c9a66");
 // ...

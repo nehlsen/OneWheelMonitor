@@ -7,6 +7,7 @@ set(COMPONENT_SRCS
         ow/Authenticator/ChallengeResponse.cpp
         ow/Authenticator/MD5.cpp
         ow/Authenticator/MD5_ESP32.cpp
+        ow/util.cpp
 # BTLE Lib - sample app
 #        BLE_Arduino/BLE_client.cpp
 # IDF BTLE - modified sample

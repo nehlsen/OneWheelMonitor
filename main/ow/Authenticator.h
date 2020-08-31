@@ -6,31 +6,36 @@
 namespace ow
 {
 
+/**
+ * OneWheel Authentication basically works like this
+ * 1) register for notify on UartSerialReadCharacteristic
+ * 2) read firmware version, write back to start key exchange
+ * 3) generate key and write to UartSerialWriteCharacteristic
+ */
 class Authenticator
 {
 public:
     explicit Authenticator(BLERemoteService *oneWheelService);
 
-    bool startAuthentication();
-
-    void tryAuthenticated();
-
     bool isAuthenticated() const;
+    bool startAuthentication();
 
 protected:
     BLERemoteService *m_oneWheelService;
 
     enum {
-        NOT_STARTED                       = 0,
-        FIRMWARE_REVISION_READ_REQUESTED  = 0x01,
-        FIRMWARE_REVISION_READ_RECEIVED   = 0x02,
-        ENABLE_NOTIFICATION_REQUESTED     = 0x04,
-        ENABLE_NOTIFICATION_RECEIVED      = 0x08,
-        FIRMWARE_REVISION_WRITE_REQUESTED = 0x10,
-        FIRMWARE_REVISION_WRITE_RECEIVED  = 0x20,
+        NOT_STARTED = 0,
+        FIRMWARE_CHECK_SUCCEED = 1<<1,
+        FIRMWARE_CHECK_FAILED = 1<<2,
+        NOTIFICATIONS_ENABLED = 1<<3,
+        FIRMWARE_WRITE_BACK = 1<<4,
+        CHALLENGE_RESPONSE_WRITTEN = 1<<5,
+        CHALLENGE_RESPONSE_FAILED_TO_GENERATE = 1<<6,
+        TRY_AUTH_FAILED = 1<<7,
+        AUTHENTICATION_COMPLETE = 1<<8,
     } m_authenticationState;
 
-    void sendSecret() {}
+    bool tryAuthenticated();
 };
 
 } // namespace ow

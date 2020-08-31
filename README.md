@@ -64,6 +64,8 @@ gatttool --device=D0:39:72:BE:0A:32 --char-write-req --value=0075 --handle=0x004
 gatttool --device=D0:39:72:BE:0A:32 --char-write-req --value=7500 --handle=0x004d
 */
 
+ConfigDescriptor "00002902-0000-1000-8000-00805f9b34fb"
+
 
 this comment provides a "btsnoop_hci.log" https://github.com/ponewheel/android-ponewheel/issues/109#issuecomment-562357395
 from what i can tell it includes the following challenge-response, made by the original OneWheel App
