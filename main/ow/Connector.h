@@ -6,6 +6,8 @@
 namespace ow
 {
 
+class Authenticator;
+
 // a) scan and connect to first discovered OW
 // b) connect to statically configured OW
 class Connector
@@ -16,7 +18,6 @@ public:
     void start();
 
     void scanAndConnect();
-
     void connect(BLEAddress address);
 
     // handler for task loop
@@ -35,11 +36,9 @@ protected:
     private:
         Connector *m_connector;
     };
-
     AdvertisedDeviceCallbacks *m_advertisedDeviceCallbacks = nullptr;
 
     void startScan();
-
     void stopScan();
 
     BLEAdvertisedDevice *m_scanResult = nullptr;
@@ -56,18 +55,12 @@ protected:
     private:
         Connector *m_connector;
     };
-
     ClientCallbacks *m_clientCallbacks = nullptr;
 
-    bool connectTo(BLEAdvertisedDevice *device);
-
-    bool connectTo(BLEAddress address);
-
-    bool connectServiceAndCharacteristic(BLEClient *client);
-
-    BLERemoteCharacteristic *m_batteryCharacteristic = nullptr;
-
+    bool connectTo(BLEAddress address, esp_ble_addr_type_t type = BLE_ADDR_TYPE_PUBLIC);
     bool m_isConnected = false;
+
+    Authenticator *m_authenticator = nullptr;
 };
 
 } // namespace ow

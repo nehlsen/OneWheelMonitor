@@ -1,4 +1,6 @@
 #include "Connector.h"
+#include "UUID.h"
+#include "Authenticator.h"
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -9,10 +11,6 @@ namespace ow
 
 static const char *LOG_TAG = "OWConnector";
 static TaskHandle_t connector_task_hdnl = nullptr;
-
-static BLEUUID owServiceUUID("e659F300-ea98-11e3-ac10-0800200c9a66");
-//a                           e659f300-ea98-11e3-ac10-0800200c9a66
-static BLEUUID batteryCharacteristicUUID("e659f303-ea98-11e3-ac10-0800200c9a66");
 
 void connector_task(void *pvParameter)
 {
@@ -40,15 +38,6 @@ void Connector::start()
     }
 
     ESP_LOGI(LOG_TAG, "starting OWConnector...");
-//    xTaskCreatePinnedToCore(
-//            &connector_task,
-//            "connector_task",
-//            4 * 1024,
-//            this,
-//            5,
-//            &connector_task_hdnl,
-//            0
-//    );
     xTaskCreate(
             &connector_task,
             "connector_task",
@@ -72,7 +61,7 @@ void Connector::connect(BLEAddress address)
 void Connector::doWork()
 {
     if (!m_isConnected && m_scanResult) {
-        connectTo(m_scanResult);
+        connectTo(m_scanResult->getAddress(), m_scanResult->getAddressType());
         delete m_scanResult;
         m_scanResult = nullptr;
     }
@@ -106,64 +95,29 @@ void Connector::stopScan()
     BLEDevice::getScan()->stop();
 }
 
-bool Connector::connectTo(BLEAdvertisedDevice *device)
+bool Connector::connectTo(BLEAddress address, esp_ble_addr_type_t type)
 {
-    ESP_LOGI(LOG_TAG, "OWConnector::connectTo(DEVICE): %s", device->getAddress().toString().c_str());
-
-    BLEClient *client = BLEDevice::createClient(); // FIXME save client as member var
-    m_clientCallbacks = new ClientCallbacks(this);
-    client->setClientCallbacks(m_clientCallbacks);
-    client->connect(device);
-
-    return connectServiceAndCharacteristic(client);
-}
-
-bool Connector::connectTo(BLEAddress address)
-{
-    ESP_LOGI(LOG_TAG, "OWConnector::connectTo(ADDRESS): %s", address.toString().c_str());
+    ESP_LOGI(LOG_TAG, "Connector::connectTo: %s", address.toString().c_str());
 
     BLEClient *client = BLEDevice::createClient();
     m_clientCallbacks = new ClientCallbacks(this);
     client->setClientCallbacks(m_clientCallbacks);
-    client->connect(address);
+    client->connect(address, type);
 
-    return connectServiceAndCharacteristic(client);
-}
-
-bool Connector::connectServiceAndCharacteristic(BLEClient *client)
-{
-    BLERemoteService *remoteService = client->getService(owServiceUUID);
+    BLERemoteService *remoteService = client->getService(ow::UUID::Service);
     if (remoteService == nullptr) {
-        ESP_LOGE(LOG_TAG, "OWConnector::connectServiceAndCharacteristic: Failed to find service UUID: %s", owServiceUUID.toString().c_str());
+        ESP_LOGE(LOG_TAG, "OWConnector::connectServiceAndCharacteristic: Failed to find service UUID: %s", ow::UUID::Service.toString().c_str());
         client->disconnect();
         return false;
     }
     ESP_LOGI(LOG_TAG, "OWConnector::connectServiceAndCharacteristic: found service");
 
-    m_batteryCharacteristic = remoteService->getCharacteristic(batteryCharacteristicUUID);
-    if (m_batteryCharacteristic == nullptr) {
-        ESP_LOGE(LOG_TAG, "OWConnector::connectServiceAndCharacteristic: Failed to find characteristic UUID: %s", batteryCharacteristicUUID.toString().c_str());
-        client->disconnect();
-        return false;
-    }
-    ESP_LOGI(LOG_TAG, "OWConnector::connectServiceAndCharacteristic: found characteristic");
+    m_authenticator = new Authenticator(remoteService);
+    m_authenticator->startAuthentication();
+    // found one wheel!
+    //  - start authentication
+    //  - once authenticated: m_oneWheel = new OnewWheel(remoteService)
 
-    // Read the value of the characteristic.
-    if(m_batteryCharacteristic->canRead()) {
-        std::string value = m_batteryCharacteristic->readValue();
-        ESP_LOGI(LOG_TAG, "OWConnector::connectServiceAndCharacteristic: current characteristic value: \"%s\"", value.c_str());
-    }
-
-    if(m_batteryCharacteristic->canNotify()) {
-//        m_batteryCharacteristic->registerForNotify(notifyCallback);
-        m_batteryCharacteristic->registerForNotify(
-                [](BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
-                    ESP_LOGI(LOG_TAG, "OWConnector: battery characteristic value changed notifyier");
-                    ESP_LOGI(LOG_TAG, "OWConnector: UUID:%s, length:%d, data:\"%s\"", pBLERemoteCharacteristic->getUUID().toString().c_str(), length, (char*)pData);
-                });
-    }
-
-    m_isConnected = true;
     return true;
 }
 
@@ -175,13 +129,10 @@ void Connector::AdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertis
 {
     ESP_LOGI(LOG_TAG, "AdvertisedDeviceCallbacks:onResult: %s", advertisedDevice.toString().c_str());
 
-    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(owServiceUUID)) {
+    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(ow::UUID::Service)) {
         ESP_LOGI(LOG_TAG, "AdvertisedDeviceCallbacks:onResult: device provides requested service! stopping scan...");
         m_connector->stopScan();
         m_connector->m_scanResult = new BLEAdvertisedDevice(advertisedDevice);
-//        myDevice = new BLEAdvertisedDevice(advertisedDevice);
-//        doConnect = true;
-//        doScan = true;
     }
 }
 

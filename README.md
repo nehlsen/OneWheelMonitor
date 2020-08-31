@@ -47,6 +47,12 @@ https://github.com/Nanoux/Onewave/blob/master/app/src/main/java/com/nanowheel/na
 0x009d = e659f31e-ea98-11e3-ac10-0800200c9a66 (OnewheelCharacteristicUNKNOWN2) y/n
 0x0101 = e659f31f-ea98-11e3-ac10-0800200c9a66 (OnewheelCharacteristicUNKNOWN3)
 0x0105 = e659f320-ea98-11e3-ac10-0800200c9a66 (OnewheelCharacteristicUNKNOWN4)
+
+e659f3fd-ea98-11e3-ac10-0800200c9a66 (OnewheelCharacteristicCustomName)
+e659f3fe-ea98-11e3-ac10-0800200c9a66 (OnewheelCharacteristicUartSerialRead)
+e659f3ff-ea98-11e3-ac10-0800200c9a66 (OnewheelCharacteristicUartSerialWrite)
+
+
 0x0045=00 then lights are OFF
 0x0045=01 is default lights
 0x0045=02 is manual mode for lights
@@ -57,3 +63,20 @@ gatttool --device=D0:39:72:BE:0A:32 --char-write-req --value=0002 --handle=0x004
 gatttool --device=D0:39:72:BE:0A:32 --char-write-req --value=0075 --handle=0x0049
 gatttool --device=D0:39:72:BE:0A:32 --char-write-req --value=7500 --handle=0x004d
 */
+
+
+this comment provides a "btsnoop_hci.log" https://github.com/ponewheel/android-ponewheel/issues/109#issuecomment-562357395
+from what i can tell it includes the following challenge-response, made by the original OneWheel App
+
+challenge
+09 8e 56
+32 04 df 7a  1b 9e 5a 0f  5a 8c bf 33  84 0e 4d dd
+d2
+
+
+response
+09 8e 56
+c8 c5 95 bc  94 23 ce 87  ae a3 bc 3a  45 73 8c 42
+78
+
+
