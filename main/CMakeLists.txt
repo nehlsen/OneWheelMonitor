@@ -1,6 +1,8 @@
 set(COMPONENT_SRCS
 # BTLE Lib - my app
         main.cpp
+        ow/Monitor.cpp
+        ow/OneWheel.cpp
         ow/Connector.cpp
         ow/ConnectorCallbacks.cpp
         ow/Authenticator.cpp

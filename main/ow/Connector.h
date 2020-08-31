@@ -18,13 +18,15 @@ class Connector
 public:
     Connector();
 
-    void start();
+//    void start();
 
     void scanAndConnect();
     void connect(BLEAddress address);
+    void maintainConnection();
 
-    // handler for task loop
-    void doWork();
+    bool isConnected() const;
+
+    BLERemoteService *getRootService();
 
 protected:
     friend class ConnectorAdvertisedDeviceCallbacks;
@@ -36,12 +38,14 @@ protected:
     BLEAdvertisedDevice *m_scanResult = nullptr;
 
     friend class ConnectorClientCallbacks;
-    ConnectorClientCallbacks *m_clientCallbacks = nullptr;
+
 
     bool connectTo(BLEAddress address, esp_ble_addr_type_t type = BLE_ADDR_TYPE_PUBLIC);
     bool m_isConnected = false;
 
     Authenticator *m_authenticator = nullptr;
+
+    BLEClient *m_client = nullptr;
 };
 
 } // namespace ow

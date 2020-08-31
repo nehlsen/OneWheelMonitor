@@ -11,43 +11,43 @@ namespace ow
 {
 
 static const char *LOG_TAG = "ow::Connector";
-static TaskHandle_t connector_task_hdnl = nullptr;
+//static TaskHandle_t connector_task_hdnl = nullptr;
 
-void connector_task(void *pvParameter)
-{
-    ESP_LOGI(LOG_TAG, "connector_task...");
-
-    auto *connector = static_cast<Connector*>(pvParameter);
-    ESP_ERROR_CHECK(nullptr == connector ? ESP_FAIL : ESP_OK);
-
-    while (true) {
-        connector->doWork();
-
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-}
+//void connector_task(void *pvParameter)
+//{
+//    ESP_LOGI(LOG_TAG, "connector_task...");
+//
+//    auto *connector = static_cast<Connector*>(pvParameter);
+//    ESP_ERROR_CHECK(nullptr == connector ? ESP_FAIL : ESP_OK);
+//
+//    while (true) {
+//        connector->maintainConnection();
+//
+//        vTaskDelay(1000 / portTICK_PERIOD_MS);
+//    }
+//}
 
 Connector::Connector()
 {
     BLEDevice::init("OWM");
 }
 
-void Connector::start()
-{
-    if (connector_task_hdnl) {
-        ESP_LOGE(LOG_TAG, "already started");
-    }
-
-    ESP_LOGI(LOG_TAG, "starting Connector...");
-    xTaskCreate(
-            &connector_task,
-            "connector_task",
-            4 * 1024,
-            this,
-            5,
-            &connector_task_hdnl
-    );
-}
+//void Connector::start()
+//{
+//    if (connector_task_hdnl) {
+//        ESP_LOGE(LOG_TAG, "already started");
+//    }
+//
+//    ESP_LOGI(LOG_TAG, "starting Connector...");
+//    xTaskCreate(
+//            &connector_task,
+//            "connector_task",
+//            4 * 1024,
+//            this,
+//            5,
+//            &connector_task_hdnl
+//    );
+//}
 
 void Connector::scanAndConnect()
 {
@@ -59,8 +59,12 @@ void Connector::connect(BLEAddress address)
     connectTo(address);
 }
 
-void Connector::doWork()
+void Connector::maintainConnection()
 {
+    if (isConnected()) {
+        return;
+    }
+
     if (!m_isConnected && m_scanResult) {
         connectTo(m_scanResult->getAddress(), m_scanResult->getAddressType());
         delete m_scanResult;
@@ -72,6 +76,11 @@ void Connector::doWork()
     //   if not auth'd, retry periodically
     //   re-scan ?!
     //   more ?!
+}
+
+bool Connector::isConnected() const
+{
+    return m_isConnected && m_authenticator && m_authenticator->isAuthenticated();
 }
 
 void Connector::startScan()
@@ -106,21 +115,38 @@ bool Connector::connectTo(BLEAddress address, esp_ble_addr_type_t type)
 {
     ESP_LOGI(LOG_TAG, "connectTo: %s", address.toString().c_str());
 
-    BLEClient *client = BLEDevice::createClient();
-    m_clientCallbacks = new ConnectorClientCallbacks(this);
-    client->setClientCallbacks(m_clientCallbacks);
-    client->connect(address, type);
+    if (m_client == nullptr) {
+        m_client = BLEDevice::createClient();
+        auto *clientCallbacks = new ConnectorClientCallbacks(this);
+        m_client->setClientCallbacks(clientCallbacks);
+    }
 
-    BLERemoteService *remoteService = client->getService(ow::UUID::Service);
-    if (remoteService == nullptr) {
+    if (m_client->connect(address, type)) {
+        ESP_LOGI(LOG_TAG, "Connection established");
+        m_isConnected = true;
+    } else {
+        ESP_LOGE(LOG_TAG, "Failed to connect");
+        return false;
+    }
+
+    BLERemoteService *owRootService = getRootService();
+    if (owRootService == nullptr) {
         ESP_LOGE(LOG_TAG, "Failed to find service UUID: %s", ow::UUID::Service.toString().c_str());
-        client->disconnect();
+        m_client->disconnect();
         return false;
     }
     ESP_LOGI(LOG_TAG, "found desired service");
 
-    m_authenticator = new Authenticator(remoteService);
+    if (m_authenticator == nullptr) {
+        m_authenticator = new Authenticator(owRootService);
+    }
+
     return m_authenticator->authenticate();
+}
+
+BLERemoteService *Connector::getRootService()
+{
+    return m_client->getService(ow::UUID::Service);
 }
 
 } // namespace ow

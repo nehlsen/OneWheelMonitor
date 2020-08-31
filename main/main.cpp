@@ -1,4 +1,4 @@
-#include "ow/Connector.h"
+#include "ow/Monitor.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -6,10 +6,8 @@ extern "C" {
 
 void app_main()
 {
-    auto *connector = new ow::Connector;
-    connector->start();
-//    connector->scanAndConnect();
-    connector->connect(BLEAddress("90:e2:02:2b:21:63"));
+    auto *monitor = new ow::Monitor;
+    monitor->start();
 }
 
 #ifdef __cplusplus
