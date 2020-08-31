@@ -35,6 +35,12 @@ protected:
         AUTHENTICATION_COMPLETE = 1<<8,
     } m_authenticationState;
 
+    void enableSerialReadNotify();
+    void disableSerialReadNotify();
+
+    bool requestChallenge();
+    void sendChallengeResponse();
+
     bool tryAuthenticated();
 };
 

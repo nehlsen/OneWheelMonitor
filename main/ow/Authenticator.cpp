@@ -11,8 +11,10 @@
 namespace ow
 {
 
-static int authentication_steps = 5;
 #define LOG_TAG "ow::Authenticator"
+
+static const int authentication_steps = 5;
+static const int writeWait = 250;
 
 static InputBuffer *MyInputBuffer = new InputBuffer;
 static ChallengeResponse *MyChallengeResponse = new ChallengeResponse(new MD5_ESP32);
@@ -46,63 +48,18 @@ bool Authenticator::startAuthentication()
         return false;
     }
 
-    const int writeWait = 250;
-
-//    (1) readCharacteristic:FW REV
-    ESP_LOGI(LOG_TAG, "1/%d: read Characteristic: Firmware Revision", authentication_steps);
-    auto firmwareRevisionCharacteristic = m_oneWheelService->getCharacteristic(ow::UUID::FirmwareRevisionCharacteristic);
-    std::string firmwareRevision = firmwareRevisionCharacteristic->readValue();
-    // TODO check firmwareRev >= 4134(0x1026) < 5000
-    if (true) {
-        m_authenticationState = FIRMWARE_CHECK_SUCCEED;
-    } else {
-        m_authenticationState = FIRMWARE_CHECK_FAILED;
+    enableSerialReadNotify();
+    if (!requestChallenge()) {
         return false;
     }
 
-//       (2) if Characteristic == FW REV
-//           check version >= 4034
-//       (2a)serial read Characteristic : enable notify
-    ESP_LOGI(LOG_TAG, "2/%d: enable notify Characteristic: UART Serial Read", authentication_steps);
-    auto serialReadCharacteristic = m_oneWheelService->getCharacteristic(ow::UUID::UartSerialReadCharacteristic);
-    serialReadCharacteristic->registerForNotify(notifyCallback);
-    m_authenticationState = NOTIFICATIONS_ENABLED;
-
-//       (2b)serial read config descriptor : enable notify (via write)
-//    auto serialReadConfigDescriptor = serialReadCharacteristic->getDescriptor(ow::UUID::ConfigDescriptor);
-//    serialReadConfigDescriptor->writeValue((uint8_t*)&ow::UUID::BleDescriptorEnableNotificationValue, 2);
-
-// onNotify Characteristic
-    // (3a->2a) if serial read characteristic
-    //              <SEND SECRET> via write to SerialWriteCharacteristic
-
-// onWrite Descriptor
-    // (3b->2b) if serial read config descriptor
-    //             write firmware rev characteristic
-    ESP_LOGI(LOG_TAG, "3/%d: write Characteristic: Firmware Revision", authentication_steps);
-    firmwareRevisionCharacteristic->writeValue(firmwareRevision);
-    m_authenticationState = FIRMWARE_WRITE_BACK;
-    vTaskDelay(writeWait / portTICK_PERIOD_MS);
-
     if (MyChallengeResponse->generateResponse()) {
-        ESP_LOGI(LOG_TAG, "4/%d: challenge-response ready, stopping notifications", authentication_steps);
-        serialReadCharacteristic->registerForNotify(nullptr);
-
-        auto serialWriteCharacteristic = m_oneWheelService->getCharacteristic(ow::UUID::UartSerialWriteCharacteristic);
-
-        ESP_LOGI(LOG_TAG, "5/%d: send challenge-response", authentication_steps);
-        serialWriteCharacteristic->writeValue(MyChallengeResponse->getResponse(), ChallengeResponse::PackageSize);
-        m_authenticationState = CHALLENGE_RESPONSE_WRITTEN;
-        vTaskDelay(writeWait / portTICK_PERIOD_MS);
-//        ESP_LOGI(LOG_TAG, "4/%d: write complete...", authentication_steps);
+        disableSerialReadNotify();
+        sendChallengeResponse();
     } else {
         m_authenticationState = CHALLENGE_RESPONSE_FAILED_TO_GENERATE;
         ESP_LOGE(LOG_TAG, "sendChallengeResponse, FAIL, no response avail");
     }
-
-// onWrite Characteristic
-    // (4) if serial write characteristic
-    //       DONE!
 
     if (tryAuthenticated()) {
         ESP_LOGI(LOG_TAG, "5/%d: tryAuthenticated SUCCEED", authentication_steps);
@@ -113,6 +70,50 @@ bool Authenticator::startAuthentication()
         m_authenticationState = TRY_AUTH_FAILED;
         return false;
     }
+}
+
+void Authenticator::enableSerialReadNotify()
+{
+    ESP_LOGI(LOG_TAG, "1/%d: enable notify Characteristic: UART Serial Read", authentication_steps);
+    auto serialReadCharacteristic = m_oneWheelService->getCharacteristic(UUID::UartSerialReadCharacteristic);
+    serialReadCharacteristic->registerForNotify(notifyCallback);
+    m_authenticationState = NOTIFICATIONS_ENABLED;
+}
+
+void Authenticator::disableSerialReadNotify()
+{
+    auto serialReadCharacteristic = m_oneWheelService->getCharacteristic(UUID::UartSerialReadCharacteristic);
+    serialReadCharacteristic->registerForNotify(nullptr);
+}
+
+bool Authenticator::requestChallenge()
+{
+    ESP_LOGI(LOG_TAG, "2/%d: read Characteristic: Firmware Revision", authentication_steps);
+    auto firmwareRevisionCharacteristic = m_oneWheelService->getCharacteristic(UUID::FirmwareRevisionCharacteristic);
+    std::string firmwareRevision = firmwareRevisionCharacteristic->readValue();
+    // TODO check firmwareRev >= 4134(0x1026) < 5000
+    if (true) {
+        m_authenticationState = FIRMWARE_CHECK_SUCCEED;
+    } else {
+        m_authenticationState = FIRMWARE_CHECK_FAILED;
+        return false;
+    }
+
+    ESP_LOGI(LOG_TAG, "3/%d: write Characteristic: Firmware Revision", authentication_steps);
+    firmwareRevisionCharacteristic->writeValue(firmwareRevision);
+    m_authenticationState = FIRMWARE_WRITE_BACK;
+    vTaskDelay(writeWait / portTICK_PERIOD_MS);
+
+    return true;
+}
+
+void Authenticator::sendChallengeResponse()
+{
+    auto serialWriteCharacteristic = m_oneWheelService->getCharacteristic(UUID::UartSerialWriteCharacteristic);
+    ESP_LOGI(LOG_TAG, "4/%d: send challenge-response", authentication_steps);
+    serialWriteCharacteristic->writeValue(MyChallengeResponse->getResponse(), ChallengeResponse::PackageSize);
+    m_authenticationState = CHALLENGE_RESPONSE_WRITTEN;
+    vTaskDelay(writeWait / portTICK_PERIOD_MS);
 }
 
 bool Authenticator::tryAuthenticated()
