@@ -76,6 +76,9 @@ bool Authenticator::startAuthentication()
     firmwareRevisionCharacteristic->writeValue(firmwareRevision);
 
     if (MyChallengeResponse->getResponseSize() > 0) {
+        ESP_LOGI(LOG_TAG, "4/%d: challenge-response ready, stopping notifications", authentication_steps);
+        serialReadCharacteristic->registerForNotify(nullptr);
+
         auto serialWriteCharacteristic = m_oneWheelService->getCharacteristic(ow::UUID::UartSerialWriteCharacteristic);
 
         ESP_LOGI(LOG_TAG, "4/%d: send challenge-response", authentication_steps);
