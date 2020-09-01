@@ -36,6 +36,22 @@ Authenticator::Authenticator(BLERemoteService *oneWheelService):
     }
 }
 
+bool Authenticator::maintainAuthentication()
+{
+    if (isAuthenticated() && tryAuthenticated()) {
+        ESP_LOGD(LOG_TAG, "maintainAuthentication: still authenticated");
+        return true;
+    }
+    if (!isAuthenticated() && m_authenticationState != NOT_STARTED) {
+        ESP_LOGD(LOG_TAG, "maintainAuthentication: authentication in progress");
+        return true;
+    }
+
+    ESP_LOGW(LOG_TAG, "maintainAuthentication: authentication lost, re-authenticating");
+    m_authenticationState = NOT_STARTED;
+    return authenticate();
+}
+
 bool Authenticator::isAuthenticated() const
 {
     return m_authenticationState == AUTHENTICATION_COMPLETE;
@@ -136,8 +152,10 @@ bool Authenticator::tryAuthenticated()
 
     auto batteryRemainingCharacteristic = m_oneWheelService->getCharacteristic(ow::UUID::BatteryRemainingCharacteristic);
     batteryRemainingCharacteristic->readValue();
-    ESP_LOGI(LOG_TAG, "tryAuthenticated, battery remaining %d%%", twoByteHexToInt(batteryRemainingCharacteristic->readRawData()));
-    return twoByteHexToInt(batteryRemainingCharacteristic->readRawData()) > 0;
+    const uint8_t batteryPercent = twoByteHexToUint8(batteryRemainingCharacteristic->readRawData());
+
+    ESP_LOGD(LOG_TAG, "tryAuthenticated, battery remaining %d%%", batteryPercent);
+    return batteryPercent > 0;
 }
 
 } // namespace ow

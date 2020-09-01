@@ -11,6 +11,8 @@ namespace ow
 static const char *LOG_TAG = "ow::Monitor";
 static TaskHandle_t monitor_task_hdnl = nullptr;
 
+static int updateDelay = 1000;
+
 [[noreturn]] void monitor_task(void *pvParameter)
 {
     ESP_LOGI(LOG_TAG, "monitor_task...");
@@ -21,7 +23,7 @@ static TaskHandle_t monitor_task_hdnl = nullptr;
     while (true) {
         monitor->doWork();
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(updateDelay / portTICK_PERIOD_MS);
     }
 }
 
@@ -63,6 +65,15 @@ void Monitor::doWork()
 
     if (m_ow->isReady()) {
         ESP_LOGI(LOG_TAG, "Battery Remaining: %d%%", m_ow->getBatteryRemaining());
+        ESP_LOGI(LOG_TAG, "Temperature:       %dc", m_ow->getTemperature());
+        ESP_LOGI(LOG_TAG, "Current Amps:      %d", m_ow->getCurrentAmps());
+        ESP_LOGI(LOG_TAG, "Battery Temp:      %dc", m_ow->getBatteryTemp());
+        ESP_LOGI(LOG_TAG, "Battery Voltage:   %d", m_ow->getBatteryVoltage());
+//        ESP_LOGI(LOG_TAG, "Custom Name:       '%s'", m_ow->getCustomName().c_str());
+
+        updateDelay = 5000;
+    } else {
+        updateDelay = 1000;
     }
 }
 

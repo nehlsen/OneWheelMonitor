@@ -13,25 +13,28 @@ namespace ow
 class OneWheel
 {
 public:
-    OneWheel();
-
     bool isReady();
 
     void setup(BLERemoteService *oneWheelRootService);
     void tearDown();
 
-//    xxx_t getSerialNumber() const;
     uint8_t getBatteryRemaining();
-// get...
-// ...
-    uint16_t getFirmwareRevision() const;
-    uint16_t getHardwareRevision() const;
-// ...
+    uint8_t getTemperature();
+    uint8_t getCurrentAmps();
+    uint8_t getBatteryTemp();
+    uint8_t getBatteryVoltage();
+    std::string getCustomName();
 
 private:
-    BLERemoteService *m_oneWheelRootService;
+    BLERemoteService *m_oneWheelRootService = nullptr;
 
+    uint8_t getCharacteristicIntValue(BLEUUID &uuid);
+    std::string getCharacteristicStringValue(BLEUUID &uuid);
     BLERemoteCharacteristic *getCharacteristic(BLEUUID uuid) const;
+
+    static std::vector<BLEUUID> getCharacteristicsForNotifications();
+    void setupNotifications();
+    void deleteNotifications();
 };
 
 } // namespace ow

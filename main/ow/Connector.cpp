@@ -61,6 +61,9 @@ void Connector::connect(BLEAddress address)
 
 void Connector::maintainConnection()
 {
+    if (m_isConnected && m_authenticator) {
+        m_authenticator->maintainAuthentication();
+    }
     if (isConnected()) {
         return;
     }

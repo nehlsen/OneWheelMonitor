@@ -17,6 +17,7 @@ class Authenticator
 public:
     explicit Authenticator(BLERemoteService *oneWheelService);
 
+    bool maintainAuthentication();
     bool isAuthenticated() const;
     bool authenticate();
 
