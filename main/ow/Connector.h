@@ -7,7 +7,6 @@ namespace ow
 {
 
 class Authenticator;
-
 class ConnectorAdvertisedDeviceCallbacks;
 class ConnectorClientCallbacks;
 
@@ -17,8 +16,6 @@ class Connector
 {
 public:
     Connector();
-
-//    void start();
 
     void scanAndConnect();
     void connect(BLEAddress address);

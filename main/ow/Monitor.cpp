@@ -11,7 +11,9 @@ namespace ow
 static const char *LOG_TAG = "ow::Monitor";
 static TaskHandle_t monitor_task_hdnl = nullptr;
 
-static int updateDelay = 1000;
+static const int updateDelayNotConnected = 1000;
+static const int updateDelayConnected = 5000;
+static int updateDelay = updateDelayNotConnected;
 
 [[noreturn]] void monitor_task(void *pvParameter)
 {
@@ -71,9 +73,9 @@ void Monitor::doWork()
         ESP_LOGI(LOG_TAG, "Battery Voltage:   %d", m_ow->getBatteryVoltage());
 //        ESP_LOGI(LOG_TAG, "Custom Name:       '%s'", m_ow->getCustomName().c_str());
 
-        updateDelay = 5000;
+        updateDelay = updateDelayConnected;
     } else {
-        updateDelay = 1000;
+        updateDelay = updateDelayNotConnected;
     }
 }
 

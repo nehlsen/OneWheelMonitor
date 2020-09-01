@@ -2,8 +2,6 @@
 #include "UUID.h"
 #include "Authenticator.h"
 #include <esp_log.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
 #include <BLEDevice.h>
 #include "ConnectorCallbacks.h"
 
@@ -11,43 +9,11 @@ namespace ow
 {
 
 static const char *LOG_TAG = "ow::Connector";
-//static TaskHandle_t connector_task_hdnl = nullptr;
-
-//void connector_task(void *pvParameter)
-//{
-//    ESP_LOGI(LOG_TAG, "connector_task...");
-//
-//    auto *connector = static_cast<Connector*>(pvParameter);
-//    ESP_ERROR_CHECK(nullptr == connector ? ESP_FAIL : ESP_OK);
-//
-//    while (true) {
-//        connector->maintainConnection();
-//
-//        vTaskDelay(1000 / portTICK_PERIOD_MS);
-//    }
-//}
 
 Connector::Connector()
 {
     BLEDevice::init("OWM");
 }
-
-//void Connector::start()
-//{
-//    if (connector_task_hdnl) {
-//        ESP_LOGE(LOG_TAG, "already started");
-//    }
-//
-//    ESP_LOGI(LOG_TAG, "starting Connector...");
-//    xTaskCreate(
-//            &connector_task,
-//            "connector_task",
-//            4 * 1024,
-//            this,
-//            5,
-//            &connector_task_hdnl
-//    );
-//}
 
 void Connector::scanAndConnect()
 {
