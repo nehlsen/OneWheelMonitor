@@ -3,6 +3,7 @@ set(COMPONENT_SRCS
         main.cpp
         ow/Monitor.cpp
         ow/OneWheel.cpp
+        ow/Display.cpp
         ow/Connector.cpp
         ow/ConnectorCallbacks.cpp
         ow/Authenticator.cpp

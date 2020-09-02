@@ -4,6 +4,7 @@
 #include <freertos/task.h>
 #include "Connector.h"
 #include "OneWheel.h"
+#include "Display.h"
 
 namespace ow
 {
@@ -33,6 +34,7 @@ Monitor::Monitor()
 {
     m_connector = new Connector;
     m_ow = new OneWheel;
+    m_display = new Display;
 }
 
 void Monitor::start()
@@ -50,6 +52,8 @@ void Monitor::start()
             5,
             &monitor_task_hdnl
     );
+
+    m_display->displayText("connecting...");
 
 //    m_connector->scanAndConnect();
     m_connector->connect(BLEAddress("90:e2:02:2b:21:63"));
@@ -72,6 +76,8 @@ void Monitor::doWork()
         ESP_LOGI(LOG_TAG, "Battery Temp:      %dc", m_ow->getBatteryTemp());
         ESP_LOGI(LOG_TAG, "Battery Voltage:   %d", m_ow->getBatteryVoltage());
 //        ESP_LOGI(LOG_TAG, "Custom Name:       '%s'", m_ow->getCustomName().c_str());
+
+        m_display->displayPercent(m_ow->getBatteryRemaining());
 
         updateDelay = updateDelayConnected;
     } else {

@@ -6,6 +6,7 @@ namespace ow
 
 class Connector;
 class OneWheel;
+class Display;
 
 class Monitor
 {
@@ -19,6 +20,7 @@ public:
 protected:
     Connector *m_connector;
     OneWheel *m_ow;
+    Display *m_display;
 };
 
 }
