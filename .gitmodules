@@ -1,3 +1,6 @@
 [submodule "components/tarablessd1306"]
 	path = components/tarablessd1306
 	url = git@github.com:TaraHoleInIt/tarablessd1306.git
+[submodule "components/ESP32_BLE_Arduino"]
+	path = components/ESP32_BLE_Arduino
+	url = git@github.com:nehlsen/ESP32_BLE_Arduino.git
