@@ -1,12 +1,14 @@
 #ifndef ONEWHEELMONITOR_MONITOR_H
 #define ONEWHEELMONITOR_MONITOR_H
 
+#include "UpdateListener.h"
+#include <vector>
+
 namespace ow
 {
 
 class Connector;
 class OneWheel;
-class Display;
 
 class Monitor
 {
@@ -20,7 +22,12 @@ public:
 protected:
     Connector *m_connector;
     OneWheel *m_ow;
-    Display *m_display;
+
+    void initUpdateListeners();
+    std::vector<UpdateListener*> m_updateListeners;
+
+    void tellAllListenersNotConnected();
+    void tellAllListenersConnected();
 };
 
 }

@@ -1,8 +1,8 @@
 set(COMPONENT_SRCS
-# BTLE Lib - my app
         main.cpp
         ow/Monitor.cpp
         ow/OneWheel.cpp
+        ow/OneWheelValueReader.cpp
         ow/Display.cpp
         ow/Connector.cpp
         ow/ConnectorCallbacks.cpp
@@ -12,12 +12,10 @@ set(COMPONENT_SRCS
         ow/Authenticator/MD5.cpp
         ow/Authenticator/MD5_ESP32.cpp
         ow/util.cpp
-# BTLE Lib - sample app
-#        BLE_Arduino/BLE_client.cpp
-# IDF BTLE - modified sample
-#        bare/ble.cpp
-#        bare/ble2.cpp
-#        bare/main.cpp
+        ow/UpdateListener.cpp
+        ow/UpdateListenerLog.cpp
+        ow/UpdateListenerDisplay.cpp
+        ow/UpdateListenerMqtt.cpp
         )
 
 register_component(

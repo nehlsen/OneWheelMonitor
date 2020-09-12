@@ -1,8 +1,8 @@
 #ifndef ONEWHEELMONITOR_ONEWHEEL_H
 #define ONEWHEELMONITOR_ONEWHEEL_H
 
-#include <cstdint>
 #include <BLERemoteCharacteristic.h>
+#include "OneWheelValueReader.h"
 
 class BLERemoteService;
 
@@ -10,7 +10,7 @@ namespace ow
 {
 
 // simple shell for BleRemoteService to access OW properties by name
-class OneWheel
+class OneWheel : public OneWheelValueReader
 {
 public:
     bool isReady();
@@ -18,11 +18,11 @@ public:
     void setup(BLERemoteService *oneWheelRootService);
     void tearDown();
 
-    uint8_t getBatteryRemaining();
-    uint8_t getTemperature();
-    uint8_t getCurrentAmps();
-    uint8_t getBatteryTemp();
-    uint8_t getBatteryVoltage();
+    uint8_t getBatteryRemaining() override;
+    uint8_t getTemperature() override;
+    uint8_t getCurrentAmps() override;
+    uint8_t getBatteryTemp() override;
+    uint8_t getBatteryVoltage() override;
     std::string getCustomName();
 
 private:

@@ -4,7 +4,9 @@
 #include <freertos/task.h>
 #include "Connector.h"
 #include "OneWheel.h"
-#include "Display.h"
+#include "UpdateListenerLog.h"
+#include "UpdateListenerDisplay.h"
+#include "UpdateListenerMqtt.h"
 
 namespace ow
 {
@@ -34,7 +36,7 @@ Monitor::Monitor()
 {
     m_connector = new Connector;
     m_ow = new OneWheel;
-    m_display = new Display;
+    initUpdateListeners();
 }
 
 void Monitor::start()
@@ -53,8 +55,6 @@ void Monitor::start()
             &monitor_task_hdnl
     );
 
-    m_display->displayText("connecting...");
-
 //    m_connector->scanAndConnect();
     m_connector->connect(BLEAddress("90:e2:02:2b:21:63"));
 }
@@ -70,18 +70,33 @@ void Monitor::doWork()
     }
 
     if (m_ow->isReady()) {
-        ESP_LOGI(LOG_TAG, "Battery Remaining: %d%%", m_ow->getBatteryRemaining());
-        ESP_LOGI(LOG_TAG, "Temperature:       %dc", m_ow->getTemperature());
-        ESP_LOGI(LOG_TAG, "Current Amps:      %d", m_ow->getCurrentAmps());
-        ESP_LOGI(LOG_TAG, "Battery Temp:      %dc", m_ow->getBatteryTemp());
-        ESP_LOGI(LOG_TAG, "Battery Voltage:   %d", m_ow->getBatteryVoltage());
-//        ESP_LOGI(LOG_TAG, "Custom Name:       '%s'", m_ow->getCustomName().c_str());
-
-        m_display->displayPercent(m_ow->getBatteryRemaining());
-
+        tellAllListenersConnected();
         updateDelay = updateDelayConnected;
     } else {
+        tellAllListenersNotConnected();
         updateDelay = updateDelayNotConnected;
+    }
+}
+
+void Monitor::initUpdateListeners()
+{
+    m_updateListeners.push_back(new UpdateListenerLog);
+    m_updateListeners.push_back(new UpdateListenerDisplay);
+    m_updateListeners.push_back(new UpdateListenerMqtt);
+}
+
+void Monitor::tellAllListenersNotConnected()
+{
+    for (UpdateListener *listener : m_updateListeners) {
+        listener->setOneWheelIsConnectedAndAuthenticated(false);
+    }
+}
+
+void Monitor::tellAllListenersConnected()
+{
+    for (UpdateListener *listener : m_updateListeners) {
+        listener->setOneWheelIsConnectedAndAuthenticated(true);
+        listener->setValues(m_ow);
     }
 }
 
