@@ -5,8 +5,14 @@
 #include "Connector.h"
 #include "OneWheel.h"
 #include "UpdateListenerLog.h"
+
+#ifdef CONFIG_ENABLE_DISPLAY
 #include "UpdateListenerDisplay.h"
+#endif
+
+#ifdef CONFIG_ENABLE_MQTT
 #include "UpdateListenerMqtt.h"
+#endif
 
 namespace ow
 {
@@ -81,8 +87,14 @@ void Monitor::doWork()
 void Monitor::initUpdateListeners()
 {
     m_updateListeners.push_back(new UpdateListenerLog);
+
+#ifdef CONFIG_ENABLE_DISPLAY
     m_updateListeners.push_back(new UpdateListenerDisplay);
+#endif
+
+#ifdef CONFIG_ENABLE_MQTT
     m_updateListeners.push_back(new UpdateListenerMqtt);
+#endif
 }
 
 void Monitor::tellAllListenersNotConnected()

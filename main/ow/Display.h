@@ -16,7 +16,7 @@ public:
     void displayPercent(uint8_t percent);
 
 protected:
-    SSD1306_Device m_I2CDisplay;
+    SSD1306_Device  m_I2CDisplay;
 };
 
 }

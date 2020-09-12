@@ -1,0 +1,11 @@
+menu "OneWheelMonitor Configuration"
+
+    config ENABLE_DISPLAY
+        bool "Enable I2C Display Output Interface"
+        default false
+
+    config ENABLE_MQTT
+        bool "Enable MQTT Output Interface"
+        default false
+
+endmenu

@@ -1,7 +1,7 @@
 #include "UpdateListenerLog.h"
 #include <esp_log.h>
 
-static const char *LOG_TAG = "ow::Monitor";
+static const char *LOG_TAG = "ow::UpdateListenerLog";
 
 void ow::UpdateListenerLog::setValues(OneWheelValueReader *reader)
 {
