@@ -1,4 +1,5 @@
 #include "ow/Monitor.h"
+#include <ebli.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -6,6 +7,8 @@ extern "C" {
 
 void app_main()
 {
+    EBLi::init_all();
+
     auto *monitor = new ow::Monitor;
     monitor->start();
 }

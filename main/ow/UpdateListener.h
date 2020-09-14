@@ -9,8 +9,7 @@ namespace ow
 class UpdateListener
 {
 public:
-    void setOneWheelIsConnectedAndAuthenticated(bool isConnectedAndAuthenticated);
-
+    virtual void setOneWheelIsConnectedAndAuthenticated(bool isConnectedAndAuthenticated);
     virtual void setValues(OneWheelValueReader *reader) = 0;
 
 protected:

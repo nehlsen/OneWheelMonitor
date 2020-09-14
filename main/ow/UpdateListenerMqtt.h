@@ -2,8 +2,7 @@
 #define ONEWHEELMONITOR_UPDATELISTENERMQTT_H
 
 #include "UpdateListener.h"
-#include <mqtt_client.h>
-#include <string>
+#include <MqttPublisher.h>
 
 namespace ow
 {
@@ -12,19 +11,15 @@ class UpdateListenerMqtt : public UpdateListener
 {
 public:
     UpdateListenerMqtt();
+
+    void setOneWheelIsConnectedAndAuthenticated(bool isConnectedAndAuthenticated) override;
+
     void setValues(OneWheelValueReader *reader) override;
 
-    void start();
-    void stop();
-    bool isConnected() const;
-    void onMqttConnected();
-    void onMqttDisconnected();
-
 protected:
-    esp_mqtt_client_handle_t m_client;
-    bool m_isConnected = false;
-
-    void publishState(const std::string &state, const std::string &value);
+    EBLi::MqttPublisher *m_connectedStatePublisher;
+    EBLi::MqttPublisher *m_batteryRemainingPublisher;
+    EBLi::MqttPublisher *m_temperaturePublisher;
 };
 
 }
