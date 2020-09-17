@@ -16,7 +16,7 @@ set(COMPONENT_SRCS
         ow/UpdateListenerLog.cpp
         )
 
-if(CONFIG_ENABLE_DISPLAY)
+if(CONFIG_OWM_ENABLE_DISPLAY)
     set(COMPONENT_SRCS
             ${COMPONENT_SRCS}
             ow/UpdateListenerDisplay.cpp
@@ -26,7 +26,7 @@ if(CONFIG_ENABLE_DISPLAY)
     #    message(STATUS "OWM: MQTT Interface disabled")
 endif()
 
-if(CONFIG_ENABLE_MQTT)
+if(CONFIG_OWM_ENABLE_MQTT)
     set(COMPONENT_SRCS
             ${COMPONENT_SRCS}
             ow/UpdateListenerMqtt.cpp

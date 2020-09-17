@@ -20,5 +20,5 @@ CONFIG_EBLI_MQTT_DEFAULT_GROUP_TOPIC="all-owms"
 ########################################################################################################################
 # OWM
 
-# CONFIG_ENABLE_DISPLAY
-CONFIG_ENABLE_MQTT=y
+# CONFIG_OWM_ENABLE_DISPLAY
+CONFIG_OWM_ENABLE_MQTT=y

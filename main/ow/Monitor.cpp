@@ -6,11 +6,11 @@
 #include "OneWheel.h"
 #include "UpdateListenerLog.h"
 
-#ifdef CONFIG_ENABLE_DISPLAY
+#ifdef CONFIG_OWM_ENABLE_DISPLAY
 #include "UpdateListenerDisplay.h"
 #endif
 
-#ifdef CONFIG_ENABLE_MQTT
+#ifdef CONFIG_OWM_ENABLE_MQTT
 #include "UpdateListenerMqtt.h"
 #endif
 
@@ -88,11 +88,11 @@ void Monitor::initUpdateListeners()
 {
     m_updateListeners.push_back(new UpdateListenerLog);
 
-#ifdef CONFIG_ENABLE_DISPLAY
+#ifdef CONFIG_OWM_ENABLE_DISPLAY
     m_updateListeners.push_back(new UpdateListenerDisplay);
 #endif
 
-#ifdef CONFIG_ENABLE_MQTT
+#ifdef CONFIG_OWM_ENABLE_MQTT
     m_updateListeners.push_back(new UpdateListenerMqtt);
 #endif
 }
