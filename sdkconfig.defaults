@@ -7,8 +7,8 @@ CONFIG_PARTITION_TABLE_CUSTOM=y
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partition_table.csv"
 CONFIG_PARTITION_TABLE_FILENAME="partition_table.csv"
 
-########################################################################################################################
-# EBLi
+################################################################################
+# EBLi Stuff
 
 CONFIG_ENABLE_EBLI_FS=y
 CONFIG_ENABLE_EBLI_WIFI=y
@@ -16,6 +16,8 @@ CONFIG_ENABLE_EBLI_MQTT=y
 CONFIG_EBLI_MQTT_DEFAULT_BROKER="black-pearl"
 CONFIG_EBLI_MQTT_DEFAULT_DEVICE_TOPIC="owm"
 CONFIG_EBLI_MQTT_DEFAULT_GROUP_TOPIC="all-owms"
+CONFIG_ENABLE_EBLI_CONFIG_OTA=y
+# CONFIG_ENABLE_EBLI_CONFIG_MANAGER
 
 ########################################################################################################################
 # OWM
