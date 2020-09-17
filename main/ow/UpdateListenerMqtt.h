@@ -20,6 +20,9 @@ protected:
     EBLi::MqttPublisher *m_connectedStatePublisher;
     EBLi::MqttPublisher *m_batteryRemainingPublisher;
     EBLi::MqttPublisher *m_temperaturePublisher;
+    EBLi::MqttPublisher *m_currentAmpsPublisher;
+    EBLi::MqttPublisher *m_batteryTempPublisher;
+    EBLi::MqttPublisher *m_batteryVoltagePublisher;
 };
 
 }

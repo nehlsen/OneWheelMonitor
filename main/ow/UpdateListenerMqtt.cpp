@@ -9,21 +9,22 @@ namespace ow
 
 UpdateListenerMqtt::UpdateListenerMqtt()
 {
-    m_connectedStatePublisher = EBLi::Mqtt::instance()->createPublisher("connected");
-    m_batteryRemainingPublisher = EBLi::Mqtt::instance()->createPublisher("batteryRemaining");
-    m_temperaturePublisher = EBLi::Mqtt::instance()->createPublisher("temperature");
+    auto *mqtt = EBLi::Mqtt::instance();
+    m_connectedStatePublisher = mqtt->createPublisher("connected");
+    m_batteryRemainingPublisher = mqtt->createPublisher("batteryRemaining");
+    m_temperaturePublisher = mqtt->createPublisher("temperature");
+    m_currentAmpsPublisher = mqtt->createPublisher("currentAmps");
+    m_batteryTempPublisher = mqtt->createPublisher("batteryTemp");
+    m_batteryVoltagePublisher = mqtt->createPublisher("batteryVoltage");
 }
 
 void UpdateListenerMqtt::setValues(ow::OneWheelValueReader *reader)
 {
     m_batteryRemainingPublisher->publishValue(reader->getBatteryRemaining());
     m_temperaturePublisher->publishValue(reader->getTemperature());
-
-//    publishState("batteryRemaining", std::to_string(reader->getBatteryRemaining()));
-//    publishState("temperature", std::to_string(reader->getTemperature()));
-//    publishState("currentAmps", std::to_string(reader->getCurrentAmps()));
-//    publishState("batteryTemp", std::to_string(reader->getBatteryTemp()));
-//    publishState("batteryVoltage", std::to_string(reader->getBatteryVoltage()));
+    m_currentAmpsPublisher->publishValue(reader->getCurrentAmps());
+    m_batteryTempPublisher->publishValue(reader->getBatteryTemp());
+    m_batteryVoltagePublisher->publishValue(reader->getBatteryVoltage());
 }
 
 void UpdateListenerMqtt::setOneWheelIsConnectedAndAuthenticated(bool isConnectedAndAuthenticated)
